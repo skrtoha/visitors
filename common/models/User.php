@@ -22,6 +22,7 @@ use yii\web\IdentityInterface;
  * @property integer $created_at
  * @property integer $updated_at
  * @property string $password write-only password
+ * @property integer $type
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -29,6 +30,19 @@ class User extends ActiveRecord implements IdentityInterface
     const STATUS_INACTIVE = 9;
     const STATUS_ACTIVE = 10;
 
+    const TYPE_ADMINISTRATOR = 1;
+    const TYPE_MANAGER = 2;
+    const TYPE_USER = 3;
+
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'username' => 'Логин',
+            'phone' => 'Телефон',
+            'type' => 'Тип',
+        ];
+    }
 
     /**
      * {@inheritdoc}
@@ -56,6 +70,8 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             ['status', 'default', 'value' => self::STATUS_INACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
+            ['type', 'in', 'range' => [self::TYPE_ADMINISTRATOR, self::TYPE_MANAGER, self::TYPE_USER]],
+            [['phone', 'username', 'email'], 'string']
         ];
     }
 
@@ -209,5 +225,21 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    /** Возвращает список типов пользователей */
+    public static function getListUserType(): array
+    {
+        return [
+            self::TYPE_ADMINISTRATOR => 'Администратор',
+            self::TYPE_MANAGER => 'Менеджер',
+            self::TYPE_USER => 'Пользователь'
+        ];
+    }
+
+    /** Возвратащает наименование типа пользователя по его номеру */
+    public function getTypeTitle(){
+        $list = self::getListUserType();
+        return $list[$this->type];
     }
 }
