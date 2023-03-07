@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'frontendUrl' => 'http://path.to.fronend',
-    'backendUrl' => 'http://path.to.backend',
-    'adminEmail' => '******@******.****',
+    'frontendUrl' => 'http://frontend.path.to',
+    'backendUrl' => 'http://backend.path.to',
+    'adminEmail' => '******@****.**',
+    'supportEmail' => '******@****.**'
 ];

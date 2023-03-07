@@ -9,35 +9,27 @@ return [
             'password' => '',
             'charset' => 'utf8',
         ],
+        'sms' => [
+            'class'    => 'ladamalina\smsc\Smsc',
+            'login'     => '*******',
+            'password'   => '*******',
+            'post' => true,
+            'https' => true,
+            'charset' => 'utf-8',
+            'debug' => false,
+        ],
         'mailer' => [
             'class' => \yii\symfonymailer\Mailer::class,
             'viewPath' => '@common/mail',
-            // send all mails to a file by default.
-            'useFileTransport' => true,
-            // You have to set
-            //
-            // 'useFileTransport' => false,
-            //
-            // and configure a transport for the mailer to send real emails.
-            //
-            // SMTP server example:
-            //    'transport' => [
-            //        'scheme' => 'smtps',
-            //        'host' => '',
-            //        'username' => '',
-            //        'password' => '',
-            //        'port' => 465,
-            //        'dsn' => 'native://default',
-            //    ],
-            //
-            // DSN example:
-            //    'transport' => [
-            //        'dsn' => 'smtp://user:pass@smtp.example.com:25',
-            //    ],
-            //
-            // See: https://symfony.com/doc/current/mailer.html#using-built-in-transports
-            // Or if you use a 3rd party service, see:
-            // https://symfony.com/doc/current/mailer.html#using-a-3rd-party-transport
+            'useFileTransport' => false,
+            'transport' => [
+                'scheme' => 'smtp',
+                'host' => 'smtp.yandex.ru',
+                'username' => '********',
+                'password' => '**********',
+                'port' => 25,
+                'encryption' => 'ssl',
+            ],
         ],
     ],
 ];
