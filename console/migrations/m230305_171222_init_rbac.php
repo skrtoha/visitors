@@ -1,7 +1,7 @@
 <?php
 
 use common\models\User;
-use frontend\models\SignupForm;
+use frontend\models\PasswordResetRequestForm;
 use yii\db\Migration;
 
 /**
@@ -28,14 +28,15 @@ class m230305_171222_init_rbac extends Migration
         $user = new User();
         $user->username = 'admin';
         $user->email = Yii::$app->params['adminEmail'];
+        $user->status = User::STATUS_ACTIVE;
         $user->setPassword('');
         $user->generateAuthKey();
         $user->generateEmailVerificationToken();
 
         if ($user->save()){
-            $form = new SignupForm();
+            $form = new PasswordResetRequestForm();
             $form->email = $user->email;
-            if ($form->sendEmail($user)){
+            if (!$form->sendEmail($user)){
                 die('Ошибка отправки сообщения пользователю');
             }
             $auth->revokeAll($user->id);
@@ -47,7 +48,7 @@ class m230305_171222_init_rbac extends Migration
     public function safeDown()
     {
         $auth = Yii::$app->authManager;
-
         $auth->removeAll();
+        $this->truncateTable(User::tableName());
     }
 }
