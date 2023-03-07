@@ -80,14 +80,19 @@ class UserController extends CommonController
             $model->load($this->request->post());
             $model->status = User::STATUS_ACTIVE;
 
-            if ($model->phone){
-                $count = User::find()->where(['phone' => $model->phone])->count();
-                if ($count){
-                    Yii::$app->session->setFlash('error', 'Такой номер телефона уже присутствует в системе');
-                    return $this->render('create', [
-                        'model' => $model,
-                    ]);
-                }
+            $orWhere = ['OR', ['username' => $model->username]];
+            if ($model->phone) {
+                $orWhere[] = ['phone' => $model->phone];
+            }
+            if ($model->email){
+                $orWhere[] = ['email' => $model->email];
+            }
+            $count = User::find()->where($orWhere)->count();
+            if ($count){
+                Yii::$app->session->setFlash('error', 'Такой пользователь, номер телефона или почта уже присутствуют в базе');
+                return $this->render('create', [
+                    'model' => $model,
+                ]);
             }
 
             $model->setPassword(Yii::$app->request->post('password'));
