@@ -6,6 +6,7 @@ use Yii;
 use yii\base\NotSupportedException;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
+use yii\helpers\ArrayHelper;
 use yii\web\IdentityInterface;
 
 /**
@@ -22,6 +23,7 @@ use yii\web\IdentityInterface;
  * @property integer $created_at
  * @property integer $updated_at
  * @property string $password write-only password
+ * @property string $phone
  * @property integer $type
  */
 class User extends ActiveRecord implements IdentityInterface
@@ -71,7 +73,8 @@ class User extends ActiveRecord implements IdentityInterface
             ['status', 'default', 'value' => self::STATUS_INACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
             ['type', 'in', 'range' => [self::TYPE_ADMINISTRATOR, self::TYPE_MANAGER, self::TYPE_USER]],
-            [['phone', 'username', 'email'], 'string']
+            [['phone', 'username', 'email'], 'string'],
+            ['phone', 'required']
         ];
     }
 
@@ -128,8 +131,7 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public static function findByVerificationToken($token) {
         return static::findOne([
-            'verification_token' => $token,
-            'status' => self::STATUS_INACTIVE
+            'verification_token' => $token
         ]);
     }
 
@@ -241,5 +243,38 @@ class User extends ActiveRecord implements IdentityInterface
     public function getTypeTitle(){
         $list = self::getListUserType();
         return $list[$this->type];
+    }
+
+    /**
+     * Отправляет QR-код посредством смс
+     * @param User $user
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function sendQRCode(User $user): void
+    {
+        $phone = preg_replace('/\D/', '', $user->phone);
+        Yii::$app->sms->send_sms($phone, self::getLinkQRCode($user->verification_token));
+    }
+
+    /**
+     * Возвращает ссылку для получения QR-кода
+     * @param $auth_key
+     * @return string
+     */
+    public static function getLinkQRCode($token){
+        Yii::$app->urlManager->setHostInfo(Yii::$app->params['frontendUrl']);
+        $link = Yii::$app->urlManager->createAbsoluteUrl(['site/qrcode', 'token' => $token]);
+        return $link;
+    }
+
+    public static function getCommonList(){
+        static $output;
+        if ($output) return $output;
+        $userList = User::findAll([
+            'status' => self::STATUS_ACTIVE,
+            'type' => self::TYPE_USER
+        ]);
+        $output = ArrayHelper::map($userList, 'id', 'username');
+        return $output;
     }
 }

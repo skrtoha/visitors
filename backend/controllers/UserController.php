@@ -5,6 +5,7 @@ namespace backend\controllers;
 use common\models\User;
 use frontend\models\PasswordResetRequestForm;
 use Yii;
+use yii\base\Exception;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -12,7 +13,7 @@ use yii\web\NotFoundHttpException;
 /**
  * UserController implements the CRUD actions for User model.
  */
-class UserController extends Controller
+class UserController extends CommonController
 {
     /**
      * Lists all User models.
@@ -44,9 +45,12 @@ class UserController extends Controller
      * Creates a new User model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return string|\yii\web\Response
+     * @throws Exception
      */
     public function actionCreate()
     {
+        $this->checkRole('admin');
+
         $model = new User();
 
         if ($this->request->isPost) {
@@ -56,8 +60,14 @@ class UserController extends Controller
             $model->generateAuthKey();
             $model->generateEmailVerificationToken();
             if ($model->save()) {
-                $form = new PasswordResetRequestForm();
-                $form->sendEmail($model);
+                if (in_array($model->type, [User::TYPE_ADMINISTRATOR, User::TYPE_MANAGER])){
+                    $form = new PasswordResetRequestForm();
+                    $form->sendEmail($model);
+                }
+
+                if ($model->type == User::TYPE_USER){
+                    User::sendQRCode($model);
+                }
 
                 return $this->redirect(['update', 'id' => $model->id]);
             }
@@ -76,9 +86,12 @@ class UserController extends Controller
      * @param int $id
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
+     * @throws Exception
      */
     public function actionUpdate($id)
     {
+        $this->checkRole('admin');
+
         $model = $this->findModel($id);
 
         if ($this->request->isPost) {
@@ -98,9 +111,11 @@ class UserController extends Controller
      * @param int $id
      * @return \yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
+     * @throws Exception
      */
     public function actionDelete($id)
     {
+        $this->checkRole('admin');
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);

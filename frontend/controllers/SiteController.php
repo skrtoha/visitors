@@ -146,6 +146,12 @@ class SiteController extends Controller
         return $this->render('about');
     }
 
+    public function actionQrcode($token){
+        Yii::$app->urlManager->setHostInfo(Yii::$app->params['backendUrl']);
+        $link = Yii::$app->urlManager->createAbsoluteUrl(['site/authqrcode', 'token' => $token]);
+        return $this->render('qrcode', ['text' => $link]);
+    }
+
     /**
      * Signs user up.
      *

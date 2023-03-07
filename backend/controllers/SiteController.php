@@ -3,6 +3,7 @@
 namespace backend\controllers;
 
 use common\models\LoginForm;
+use common\models\User;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
@@ -64,10 +65,14 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        if (\Yii::$app->user->can('admin')){
-            return $this->redirect(['/user/index']);
-        }
         return $this->render('index');
+    }
+
+    public function actionAuthqrcode($token){
+        $user = User::findByVerificationToken($token);
+        if ($user){
+            $this->redirect(['/visit/create', 'user_id' => $user->id]);
+        }
     }
 
     /**
