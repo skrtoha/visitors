@@ -16,6 +16,11 @@ use yii\db\ActiveRecord;
  */
 class Visit extends ActiveRecord
 {
+    public function attributes(){
+        $attribues = parent::attributes();
+        $attribues[] = 'count_visits';
+        return $attribues;
+    }
     /**
      * {@inheritdoc}
      */
@@ -31,7 +36,7 @@ class Visit extends ActiveRecord
     {
         return [
             [['user_id', 'sum'], 'required'],
-            [['user_id', 'sum', 'discount'], 'integer'],
+            [['user_id', 'sum', 'discount', 'count_visits'], 'integer'],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
@@ -46,6 +51,7 @@ class Visit extends ActiveRecord
             'user_id' => 'Пользователь',
             'sum' => 'Сумма',
             'discount' => 'Скидка',
+            'count_visits' => 'Количество посещений'
         ];
     }
 

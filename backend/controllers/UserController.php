@@ -3,11 +3,11 @@
 namespace backend\controllers;
 
 use common\models\User;
+use common\models\Visit;
 use frontend\models\PasswordResetRequestForm;
 use Yii;
 use yii\base\Exception;
 use yii\data\ActiveDataProvider;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -15,6 +15,11 @@ use yii\web\NotFoundHttpException;
  */
 class UserController extends CommonController
 {
+    public function behaviors()
+    {
+        return parent::behaviors();
+    }
+
     /**
      * Lists all User models.
      *
@@ -22,21 +27,39 @@ class UserController extends CommonController
      */
     public function actionIndex()
     {
-        $dataProvider = new ActiveDataProvider([
-            'query' => User::find(),
-
-            'pagination' => [
-                'pageSize' => 50
-            ],
-            'sort' => [
+        if (Yii::$app->user->can('admin')){
+            $query = User::find();
+            $view = 'index';
+            $sort = [
                 'defaultOrder' => [
                     'id' => SORT_DESC,
                 ]
-            ],
+            ];
+        }
+        if (Yii::$app->user->can('manager')){
+            $query = Visit::find()
+                ->from(['v' => Visit::tableName()])
+                ->select([
+                    'user_id' => 'u.id',
+                    'count_visits' => 'COUNT(u.id)',
+                    'sum' => 'SUM(v.sum - v.discount)'
+                ])
+                ->leftJoin(['u' => User::tableName()], "v.user_id = u.id")
+                ->where(['u.type' => User::TYPE_USER])
+                ->groupBy('v.user_id');
+            $view = 'index-group';
+            $sort = [];
+        }
 
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+            'pagination' => [
+                'pageSize' => 50
+            ],
+            'sort' => $sort,
         ]);
 
-        return $this->render('index', [
+        return $this->render($view, [
             'dataProvider' => $dataProvider,
         ]);
     }
@@ -56,6 +79,17 @@ class UserController extends CommonController
         if ($this->request->isPost) {
             $model->load($this->request->post());
             $model->status = User::STATUS_ACTIVE;
+
+            if ($model->phone){
+                $count = User::find()->where(['phone' => $model->phone])->count();
+                if ($count){
+                    Yii::$app->session->setFlash('error', 'Такой номер телефона уже присутствует в системе');
+                    return $this->render('create', [
+                        'model' => $model,
+                    ]);
+                }
+            }
+
             $model->setPassword(Yii::$app->request->post('password'));
             $model->generateAuthKey();
             $model->generateEmailVerificationToken();
@@ -63,13 +97,20 @@ class UserController extends CommonController
                 if (in_array($model->type, [User::TYPE_ADMINISTRATOR, User::TYPE_MANAGER])){
                     $form = new PasswordResetRequestForm();
                     $form->sendEmail($model);
+
+                    $auth = Yii::$app->authManager;
+                    if ($model->type == User::TYPE_MANAGER) $role = $auth->getRole('manager');
+                    if ($model->type == User::TYPE_ADMINISTRATOR) $role = $auth->getRole('admin');
+                    $auth->assign($role, $model->id);
                 }
 
                 if ($model->type == User::TYPE_USER){
                     User::sendQRCode($model);
                 }
 
-                return $this->redirect(['update', 'id' => $model->id]);
+                Yii::$app->session->setFlash('success', 'Пользователь успешно сохранен');
+
+                return $this->response->redirect(['/user/update', 'id' => $model->id]);
             }
         } else {
             $model->loadDefaultValues();
@@ -88,11 +129,11 @@ class UserController extends CommonController
      * @throws NotFoundHttpException if the model cannot be found
      * @throws Exception
      */
-    public function actionUpdate($id)
+    public function actionUpdate()
     {
         $this->checkRole('admin');
 
-        $model = $this->findModel($id);
+        $model = $this->findModel(Yii::$app->request->get('id'));
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()){

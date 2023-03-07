@@ -20,7 +20,7 @@ class m230305_120618_add_user_type_to_user extends Migration
         $this->addColumn(
             User::tableName(),
             'phone',
-            $this->string(20)->defaultValue(null)->unique()
+            $this->string(20)->defaultValue(null)
         );
     }
 

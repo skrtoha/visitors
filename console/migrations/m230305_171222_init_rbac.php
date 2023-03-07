@@ -1,6 +1,7 @@
 <?php
 
 use common\models\User;
+use frontend\models\SignupForm;
 use yii\db\Migration;
 
 /**
@@ -8,7 +9,10 @@ use yii\db\Migration;
  */
 class m230305_171222_init_rbac extends Migration
 {
-    public function up()
+    /**
+     * @throws Exception
+     */
+    public function safeUp()
     {
         $auth = Yii::$app->authManager;
 
@@ -21,14 +25,26 @@ class m230305_171222_init_rbac extends Migration
         $roleUser = $auth->createRole('user');
         $auth->add($roleUser);
 
-        $user = User::findIdentity(1);
-        if (is_null($user)) die('Необходимо сначала создать пользователя!');
+        $user = new User();
+        $user->username = 'admin';
+        $user->email = Yii::$app->params['adminEmail'];
+        $user->setPassword('');
+        $user->generateAuthKey();
+        $user->generateEmailVerificationToken();
 
-        $auth->revokeAll(1);
-        $auth->assign($roleAdmin, 1);
+        if ($user->save()){
+            $form = new SignupForm();
+            $form->email = $user->email;
+            if ($form->sendEmail($user)){
+                die('Ошибка отправки сообщения пользователю');
+            }
+            $auth->revokeAll($user->id);
+            $auth->assign($roleAdmin, $user->id);
+        }
+        else die('Ошибка создания администратора');
     }
 
-    public function down()
+    public function safeDown()
     {
         $auth = Yii::$app->authManager;
 

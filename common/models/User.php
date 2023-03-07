@@ -42,7 +42,7 @@ class User extends ActiveRecord implements IdentityInterface
             'id' => 'ID',
             'username' => 'Логин',
             'phone' => 'Телефон',
-            'type' => 'Тип',
+            'type' => 'Тип'
         ];
     }
 
@@ -73,8 +73,7 @@ class User extends ActiveRecord implements IdentityInterface
             ['status', 'default', 'value' => self::STATUS_INACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
             ['type', 'in', 'range' => [self::TYPE_ADMINISTRATOR, self::TYPE_MANAGER, self::TYPE_USER]],
-            [['phone', 'username', 'email'], 'string'],
-            ['phone', 'required']
+            [['phone', 'username', 'email'], 'string']
         ];
     }
 

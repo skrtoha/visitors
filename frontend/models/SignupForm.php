@@ -64,7 +64,7 @@ class SignupForm extends Model
      * @param User $user user model to with email should be send
      * @return bool whether the email was sent
      */
-    protected function sendEmail($user)
+    public function sendEmail($user)
     {
         return Yii::$app
             ->mailer

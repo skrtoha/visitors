@@ -3,6 +3,7 @@
 namespace backend\controllers;
 
 use common\models\Visit;
+use Yii;
 use yii\base\Exception;
 use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
@@ -64,16 +65,20 @@ class VisitController extends CommonController
      * @return string|Response
      * @throws Exception Если пользователь не является менеджером
      */
-    public function actionCreate($user_id)
+    public function actionCreate()
     {
         $this->checkRole('manager');
+
+        $user_id = Yii::$app->request->get('user_id');
+
+        if (!$user_id) throw new Exception('Не найден параметр user_id');
 
         $model = new Visit();
         $model->user_id = $user_id;
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['index']);
+                return Yii::$app->response->redirect(['/visit/index']);
             }
         } else {
             $model->loadDefaultValues();
@@ -119,9 +124,11 @@ class VisitController extends CommonController
      * @param int $id ID
      * @return Response
      * @throws NotFoundHttpException if the model cannot be found
+     * @throws Exception
      */
     public function actionDelete($id)
     {
+        $this->checkRole('manager');
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
