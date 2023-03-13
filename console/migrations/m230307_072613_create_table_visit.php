@@ -14,18 +14,19 @@ class m230307_072613_create_table_visit extends Migration
      */
     public function safeUp()
     {
-        $this->execute("
-            create table if not exists ".Visit::tableName()."
-            (
-                id int auto_increment primary key,
-                user_id  int           not null,
-                sum      int           not null,
-                discount int default 0 not null,
-                constraint visitor_user_id_fk
-                    foreign key (user_id) references ".User::tableName()." (id)
-            );
-        ");
-
+        $this->createTable(Visit::tableName(), [
+            'id' => $this->primaryKey()->notNull(),
+            'user_id' => $this->integer()->notNull(),
+            'sum' => $this->integer()->notNull(),
+            'discount' => $this->integer()->notNull(),
+        ]);
+        $this->addForeignKey(
+            'visitor_user_id_fk',
+            Visit::tableName(),
+            ['user_id'],
+            User::tableName(),
+            ['id']
+        );
     }
 
     /**
