@@ -25,7 +25,8 @@ class m230307_072613_create_table_visit extends Migration
             Visit::tableName(),
             ['user_id'],
             User::tableName(),
-            ['id']
+            ['id'],
+            'CASCADE'
         );
     }
 
